@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#07080c" />
+    <meta name="description" content="Ashlane — a one-sector space roguelike. Play in landscape." />
+    <title>Ashlane</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/play.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="rotate">
+        <div class="phone" aria-hidden="true"></div>
+        <h1>ASHLANE</h1>
+        <p>Turn your phone sideways. The Cinder Reach is built for landscape — an iPhone 12 Pro Max held level.</p>
+      </div>
+      <div id="shell">
+        <header id="hud"></header>
+        <div id="stage">
+          <canvas id="c"></canvas>
+          <div id="toasts"></div>
+          <div id="modal" hidden></div>
+        </div>
+        <footer id="dock"></footer>
+      </div>
+    </div>
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>
