@@ -86,14 +86,18 @@ body {
   gap: 10px;
   padding: 0 8px;
   border-bottom: 1px solid var(--line);
+  background: linear-gradient(to bottom, #0e121a, #090b10);
+  box-shadow: 0 1px 0 rgba(232, 160, 74, 0.08), 0 6px 18px rgba(0, 0, 0, 0.45);
+  position: relative;
+  z-index: 1;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 12px;
   letter-spacing: 0.02em;
 }
-.brand { color: var(--amber); font-weight: 500; letter-spacing: 0.16em; }
+.brand { color: var(--amber); font-weight: 500; letter-spacing: 0.16em; text-shadow: 0 0 10px rgba(232, 160, 74, 0.55); }
 .hull { display: flex; align-items: center; gap: 6px; min-width: 120px; }
-.hull .bar { flex: 1; height: 6px; background: #0b0d12; border: 1px solid var(--line); }
-.hull i { display: block; height: 100%; background: var(--ok); width: 100%; }
+.hull .bar { flex: 1; height: 6px; background: #0b0d12; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.hull i { display: block; height: 100%; background: linear-gradient(to bottom, #b8f09a, var(--ok) 60%, #6fb453); width: 100%; box-shadow: 0 0 8px rgba(155, 224, 122, 0.6); }
 .stat b, .hull b { color: var(--text); font-weight: 500; }
 .stat.warn, .fleet.warn { color: var(--cinder); }
 .fleet { margin-left: auto; color: var(--dim); white-space: nowrap; }
@@ -126,6 +130,9 @@ body {
   padding: 6px 10px;
   background: rgba(10, 12, 16, 0.86);
   border: 1px solid var(--line);
+  border-left: 2px solid var(--amber);
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   font-size: 13px;
   max-width: min(520px, 100%);
 }
@@ -133,7 +140,8 @@ body {
 #dock {
   flex: 0 0 auto;
   border-top: 1px solid var(--line);
-  background: #0b0e14;
+  background: linear-gradient(to bottom, #0d1119, #080a0f);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.45);
   padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
@@ -151,10 +159,11 @@ body {
   min-width: 0;
   display: flex;
   align-items: center;
-  background: #121722;
+  background: linear-gradient(to bottom, #161c29, #10141d);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 6px;
   min-height: 44px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .sys span {
   flex: 1;
