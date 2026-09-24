@@ -112,6 +112,7 @@ export function createEnemy(def) {
       room: home,
       path: [],
       hop: 0,
+      boards: i >= def.crew - (def.boarders ?? 0),
     });
   }
   return {

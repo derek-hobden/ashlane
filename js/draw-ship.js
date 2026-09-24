@@ -387,6 +387,14 @@ function drawCrew(ctx, ship, box, mirror, state, time) {
     // Standing at a station: turn toward the console in the middle of the room.
     const work = !walking && !!roomObj.system && roomObj.hp > 0;
     if (work && Math.abs(slot) > 1) face = -Math.sign(slot);
+    // The boarding party waits aboard their own ship already suited up.
+    if (crew.boards) {
+      people.push({
+        y: pos.y + 10,
+        draw: () => drawBoarder(ctx, pos.x, pos.y + 10, { face, hp: crew.hp, hpMax: crew.hpMax, time, seed: i * 1.7 }),
+      });
+      return;
+    }
     people.push({
       y: pos.y + 10,
       draw: () => drawPerson(ctx, pos.x, pos.y + 10, {

@@ -83,6 +83,13 @@ export function spawnShieldHit(x, y, color = "rgba(110,220,255,1)") {
   spawnSparks(x, y, 8, { speed: 90, color });
 }
 
+/** A teleport: a column of light with a ring at the feet. */
+export function spawnBeam(x, y, color) {
+  push({ kind: "beam", x, y, life: 0.7, max: 0.7, size: 34, color });
+  push({ kind: "ring", x, y: y + 8, life: 0.5, max: 0.5, size: 18, color });
+  spawnSparks(x, y, 10, { speed: 70, color });
+}
+
 export function spawnMuzzle(x, y, color) {
   push({ kind: "flash", x, y, life: 0.12, max: 0.12, size: 18, color });
 }
@@ -134,6 +141,18 @@ export function drawFx(ctx) {
     } else if (p.kind === "flash") {
       ctx.globalAlpha = 1;
       glow(ctx, p.x, p.y, p.size * (0.6 + 0.4 * t), p.color, t);
+    } else if (p.kind === "beam") {
+      // Brightest mid-life: fades in, then out.
+      const a = Math.sin(t * Math.PI);
+      const w = 7 + 5 * a;
+      const col = ctx.createLinearGradient(p.x, p.y - p.size, p.x, p.y + p.size * 0.4);
+      col.addColorStop(0, p.color.replace(/[\d.]+\)$/, "0)"));
+      col.addColorStop(0.5, p.color.replace(/[\d.]+\)$/, `${0.8 * a})`));
+      col.addColorStop(1, p.color.replace(/[\d.]+\)$/, "0)"));
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = col;
+      ctx.fillRect(p.x - w / 2, p.y - p.size, w, p.size * 1.4);
+      glow(ctx, p.x, p.y - 4, 26, p.color, a);
     } else if (p.kind === "ring") {
       ctx.strokeStyle = p.color;
       ctx.globalAlpha = t * 0.8;
