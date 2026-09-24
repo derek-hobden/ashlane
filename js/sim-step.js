@@ -120,14 +120,20 @@ function stepCombat(state, dt) {
   combat.floats = combat.floats.filter((f) => f.life > 0).slice(-16);
 
   if (combat.enemy && combat.enemy.boardersLeft > 0) {
-    combat.enemy.teleportT -= dt;
-    if (combat.enemy.teleportT <= 0) {
-      combat.enemy.boardersLeft -= 1;
-      combat.enemy.teleportT = 22;
-      const rooms = state.player.rooms;
-      const room = rooms[rint(state, rooms.length)].id;
-      state.player.boarders.push({ id: `b${combat.time.toFixed(2)}`, hp: 78, hpMax: 78, room });
-      toast(state, "Boarder in " + room + ".");
+    const enemy = combat.enemy;
+    enemy.teleportT -= dt;
+    if (enemy.teleportT <= 0) {
+      enemy.boardersLeft -= 1;
+      enemy.teleportT = 22;
+      // A boarder is one of the enemy's own crew: they leave their ship, keeping their health.
+      const idx = enemy.crew.findLastIndex((c) => c.boards && c.hp > 0);
+      if (idx >= 0) {
+        const [crew] = enemy.crew.splice(idx, 1);
+        const rooms = state.player.rooms;
+        const room = rooms[rint(state, rooms.length)].id;
+        state.player.boarders.push({ id: crew.id, hp: crew.hp, hpMax: crew.hpMax, room, from: crew.room });
+        toast(state, "Boarder in " + room + ".");
+      }
     }
   }
 

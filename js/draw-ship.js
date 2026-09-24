@@ -1,6 +1,7 @@
 import { DESIGN_W } from "./content.js";
 import { center, roomRect, roundRect } from "./draw-geom.js";
 import { glow, spawnSparks } from "./draw-fx.js";
+import { drawBoarder, drawPerson } from "./draw-people.js";
 
 // Hull outline in design units (rooms span x 16–244, y 16–182). The nose points +x; enemies mirror it.
 const HULL = [
@@ -358,100 +359,76 @@ function drawDoors(ctx, ship, box, mirror) {
   }
 }
 
+function crewSlot(idx, n) {
+  return n < 2 ? -9 : (idx - (n - 1) / 2) * 18;
+}
+
 function drawCrew(ctx, ship, box, mirror, state, time) {
-  for (const crew of ship.crew) {
-    if (crew.hp <= 0) continue;
+  const ahead = ship.side === "enemy" ? -1 : 1;
+  const people = [];
+  ship.crew.forEach((crew, i) => {
+    if (crew.hp <= 0) return;
     const roomObj = ship.rooms.find((r) => r.id === crew.room);
-    if (!roomObj) continue;
+    if (!roomObj) return;
     const a = roomRect(roomObj, box, mirror);
     let pos = center(a);
-    if (crew.path?.length) {
+    let face = ahead;
+    const walking = crew.path?.length > 0;
+    if (walking) {
       const b = roomRect(ship.rooms.find((r) => r.id === crew.path[0]), box, mirror);
       const t = Math.min(1, crew.hop / 0.42);
       const pb = center(b);
+      if (Math.abs(pb.x - pos.x) > 2) face = Math.sign(pb.x - pos.x);
       pos = { x: pos.x + (pb.x - pos.x) * t, y: pos.y + (pb.y - pos.y) * t };
     }
-    const idx = ship.crew.filter((c) => c.room === crew.room).indexOf(crew);
-    pos.x += (idx - 0.5) * 16;
-    const bob = crew.path?.length ? Math.sin(time * 18) * 1.2 : Math.sin(time * 2 + idx) * 0.5;
-    pos.y += bob;
-    const r = 7.5;
-
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.beginPath();
-    ctx.ellipse(pos.x, pos.y + r + 1.5, r * 0.9, 2.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    const selected = state.selectedCrew === crew.id;
-    if (selected) {
-      glow(ctx, pos.x, pos.y, 20, "rgba(255,230,190,1)", 0.55);
-      ctx.save();
-      ctx.strokeStyle = "#fff4e4";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([3, 3]);
-      ctx.lineDashOffset = -time * 14;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, r + 5, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+    const mates = ship.crew.filter((c) => c.room === crew.room && c.hp > 0);
+    const slot = crewSlot(mates.indexOf(crew), mates.length);
+    pos.x += slot;
+    // Standing at a station: turn toward the console in the middle of the room.
+    const work = !walking && !!roomObj.system && roomObj.hp > 0;
+    if (work && Math.abs(slot) > 1) face = -Math.sign(slot);
+    // The boarding party waits aboard their own ship already suited up.
+    if (crew.boards) {
+      people.push({
+        y: pos.y + 10,
+        draw: () => drawBoarder(ctx, pos.x, pos.y + 10, { face, hp: crew.hp, hpMax: crew.hpMax, time, seed: i * 1.7 }),
+      });
+      return;
     }
-    const body = ctx.createRadialGradient(pos.x - r * 0.35, pos.y - r * 0.4, 1, pos.x, pos.y, r);
-    body.addColorStop(0, "#ffffff");
-    body.addColorStop(0.25, crew.color);
-    body.addColorStop(1, shade(crew.color, -0.45));
-    ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(10,10,14,0.85)";
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-    ctx.lineWidth = 1;
+    people.push({
+      y: pos.y + 10,
+      draw: () => drawPerson(ctx, pos.x, pos.y + 10, {
+        id: crew.id,
+        color: crew.color,
+        name: crew.name,
+        face,
+        walk: walking ? time * 17 + i : null,
+        work,
+        selected: state.selectedCrew === crew.id,
+        hp: crew.hp,
+        hpMax: crew.hpMax,
+        enemy: ship.side === "enemy",
+        time,
+      }),
+    });
+  });
 
-    if (crew.hpMax && crew.hp < crew.hpMax) {
-      const f = Math.max(0, crew.hp / crew.hpMax);
-      ctx.strokeStyle = f > 0.5 ? "#8fdb6a" : f > 0.25 ? "#e8a04a" : "#ff5a36";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, r + 2.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
-      ctx.stroke();
-      ctx.lineWidth = 1;
-    }
-    ctx.fillStyle = "#14120e";
-    ctx.font = "600 9px Sora, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(crew.name.slice(0, 1), pos.x, pos.y + 0.5);
-  }
-
-  for (const boarder of ship.boarders ?? []) {
+  const boarders = ship.boarders ?? [];
+  boarders.forEach((boarder, i) => {
     const room = ship.rooms.find((r) => r.id === boarder.room);
-    if (!room) continue;
+    if (!room) return;
     const p = center(roomRect(room, box, mirror));
-    p.x += 12;
-    const s = 7;
-    glow(ctx, p.x, p.y, 18, "rgba(255,70,40,1)", 0.5 + 0.3 * Math.sin(time * 8));
-    ctx.fillStyle = "#ff5a36";
-    ctx.strokeStyle = "#2a0d0a";
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y - s);
-    ctx.lineTo(p.x + s, p.y);
-    ctx.lineTo(p.x, p.y + s);
-    ctx.lineTo(p.x - s, p.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#2a0d0a";
-    ctx.fillRect(p.x - 7, p.y + s + 3, 14, 2.5);
-    ctx.fillStyle = "#ff8a70";
-    ctx.fillRect(p.x - 7, p.y + s + 3, 14 * Math.max(0, boarder.hp / boarder.hpMax), 2.5);
-  }
-}
+    const k = boarders.filter((o) => o.room === boarder.room).indexOf(boarder);
+    const x = p.x + 16 + k * 16;
+    people.push({
+      y: p.y + 11,
+      draw: () => drawBoarder(ctx, x, p.y + 11, { face: -ahead, hp: boarder.hp, hpMax: boarder.hpMax, time, seed: i * 1.7 }),
+    });
+  });
 
-function shade(hex, amt) {
-  const n = parseInt(hex.slice(1), 16);
-  const f = (c) => Math.max(0, Math.min(255, Math.round(c + (amt < 0 ? c * amt : (255 - c) * amt))));
-  return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
+  // Paint back to front so figures lower on screen overlap those behind.
+  people.sort((m, n) => m.y - n.y);
+  for (const person of people) person.draw();
 }
 
 export function shieldGeometry(box) {

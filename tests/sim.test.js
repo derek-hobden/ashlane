@@ -12,6 +12,7 @@ import {
   sectorLinksOk,
   setPower,
   shortestJumps,
+  startCombat,
   step,
   storeItems,
 } from "../js/sim.js";
@@ -108,4 +109,26 @@ test("distress choice and dust jump do not advance the armada", () => {
   const before = state.sector.fleetCol;
   assert.equal(jump(state, "E").ok, true);
   assert.equal(state.sector.fleetCol, before, "leaving dust should not advance the armada");
+});
+
+test("a boarder is one of the enemy's own crew", () => {
+  const state = newRun(5);
+  state.introSeen = true;
+  startCombat(state, "boarder");
+  const enemy = state.combat.enemy;
+  for (const weapon of state.player.weapons) weapon.autofire = false;
+  state.paused = false;
+  state.modal = null;
+  const crewBefore = enemy.crew.map((c) => c.id);
+  assert.equal(crewBefore.length, 3);
+  let t = 0;
+  while (state.player.boarders.length === 0 && t < 30) {
+    step(state, 0.05);
+    t += 0.05;
+  }
+  assert.equal(state.player.boarders.length, 1, "boarder should arrive");
+  const boarder = state.player.boarders[0];
+  assert.ok(crewBefore.includes(boarder.id), "boarder came from the enemy crew");
+  assert.equal(enemy.crew.length, 2, "enemy has one fewer crew aboard");
+  assert.ok(!enemy.crew.some((c) => c.id === boarder.id));
 });

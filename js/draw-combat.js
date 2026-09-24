@@ -1,11 +1,19 @@
 import { evasion } from "./sim.js";
 import { hitState, roomRect, shipLayout } from "./draw-geom.js";
-import { drawFx, glow, spawnExplosion, spawnMuzzle, spawnShieldHit, stepFx } from "./draw-fx.js";
+import { drawFx, glow, spawnBeam, spawnExplosion, spawnMuzzle, spawnShieldHit, stepFx } from "./draw-fx.js";
 import { drawShip, shieldGeometry } from "./draw-ship.js";
 import { drawProjectile, shotPath } from "./draw-shot.js";
 
 const seenShots = new Set();
 const seenFloats = new WeakSet();
+const seenBoarders = new WeakSet();
+
+function beam(ship, roomId, box) {
+  const room = ship.rooms.find((r) => r.id === roomId);
+  if (!room) return;
+  const r = roomRect(room, box, ship.side === "enemy");
+  spawnBeam(r.x + r.w / 2, r.y + r.h / 2, "rgba(255,110,80,1)");
+}
 
 function noteEffects(state, boxes) {
   for (const shot of state.combat.projectiles) {
@@ -20,6 +28,13 @@ function noteEffects(state, boxes) {
   if (seenShots.size > 120) {
     const keep = new Set(state.combat.projectiles.map((s) => s.id));
     for (const id of seenShots) if (!keep.has(id)) seenShots.delete(id);
+  }
+  // A boarder beaming across: flash where they left and where they land.
+  for (const boarder of state.player.boarders ?? []) {
+    if (seenBoarders.has(boarder)) continue;
+    seenBoarders.add(boarder);
+    if (boarder.from && state.combat.enemy) beam(state.combat.enemy, boarder.from, boxes.enemy);
+    beam(state.player, boarder.room, boxes.player);
   }
   for (const flo of state.combat.floats) {
     if (seenFloats.has(flo)) continue;
